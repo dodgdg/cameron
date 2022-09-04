@@ -31,6 +31,13 @@ enum Counter {
     NoCounter,
 }
 
+
+#[derive(Debug, PartialEq)]
+enum Winner {
+    WinningPlayer(Player),
+    NoWinner,
+}
+
 #[derive(Debug)]
 struct PlayerMove {
     player: Player,
@@ -39,6 +46,7 @@ struct PlayerMove {
 
 #[derive(Debug)]
 enum MoveError {
+    GameOver,
     NotYourTurn,
     InvalidColumn,
     ColumnFull,
@@ -47,6 +55,7 @@ enum MoveError {
 #[derive(Debug)]
 struct Board {
     turn: Player,
+    winner: Winner,
     top_spot: [u8; BOARD_WIDTH],
     matrix: [[Counter; BOARD_HEIGHT]; BOARD_WIDTH],
 }
@@ -54,32 +63,44 @@ struct Board {
 fn default_board() -> Board {
     Board {
         turn: Player::Player1,
+        winner: Winner::NoWinner,
         top_spot: [0; BOARD_WIDTH],
         matrix: [[Counter::NoCounter; BOARD_HEIGHT]; BOARD_WIDTH],
     }
 }
 
 impl Board {
+    fn winning_move(&self, column: usize, row: usize) -> bool {
+        true  // need to do all the checks, efficiently!
+    }
+
     fn make_move(&mut self, player_move: PlayerMove) -> Result<&Board, MoveError> {
+        if self.winner != Winner::NoWinner {
+            return Err(MoveError::GameOver);
+        }
         if player_move.player != self.turn {
             return Err(MoveError::NotYourTurn);
         }
         if (player_move.column) >= BOARD_WIDTH {
             return Err(MoveError::InvalidColumn);
         }
+
         let spot = self.top_spot[player_move.column] as usize;
 
         if spot >= BOARD_HEIGHT {
             return Err(MoveError::ColumnFull);
         }
         
+        if self.winning_move(player_move.column, spot) {
+            self.winner = Winner::WinningPlayer(player_move.player);
+        }
         self.matrix[player_move.column][spot] = Counter::PlayerCounter(player_move.player);
         self.top_spot[player_move.column] += 1;
         self.turn = self.turn.other();
+
         Ok(self)
     }
 }
-
 
 fn main() {
     let mut board = default_board();
