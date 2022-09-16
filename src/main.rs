@@ -10,6 +10,7 @@ use termion::raw::IntoRawMode;
 
 const BOARD_WIDTH: usize = 7;
 const BOARD_HEIGHT: usize = 6;
+const N_IN_A_ROW: usize = 4;
 
 const CIRCLE: &str = "\u{2B24}";
 const PLAYER_1_COLOR: color::Fg<color::Red> = color::Fg(color::Red);
@@ -89,10 +90,10 @@ fn efficient_check(board: &Board, column: usize, row: usize, column_shift: isize
 
     let mut in_a_row_count = 1;
 
-    for i in 1..=3 {
+    for i in 1..=(N_IN_A_ROW - 1) {
         if check_spot(&board,
-                      column as isize + i * column_shift,
-                      row as isize + i * row_shift,
+                      column as isize + i as isize * column_shift,
+                      row as isize + i as isize * row_shift,
                       turn_player) {
             in_a_row_count += 1;
         } else {
@@ -100,15 +101,15 @@ fn efficient_check(board: &Board, column: usize, row: usize, column_shift: isize
         }
     }
 
-    if in_a_row_count == 4 { return true };
+    if in_a_row_count == N_IN_A_ROW { return true };
 
-    for i in 1..=(4 - in_a_row_count) {
+    for i in 1..=(N_IN_A_ROW - in_a_row_count) {
         if check_spot(&board, 
-                      column as isize - i * column_shift, 
-                      row as isize - i * row_shift, 
+                      column as isize - i as isize * column_shift, 
+                      row as isize - i as isize * row_shift, 
                       turn_player) {
             in_a_row_count += 1;
-            if in_a_row_count == 4 { return true };
+            if in_a_row_count == N_IN_A_ROW { return true };
         }
     }
 
@@ -118,12 +119,16 @@ fn efficient_check(board: &Board, column: usize, row: usize, column_shift: isize
 impl Board {
     fn winning_move(&self, column: usize, row: usize) -> bool {
         let turn_player = Counter::PlayerCounter(self.turn);
-        if row >= 3 {
+        if row >= N_IN_A_ROW - 1 {
             // vertical check (S)
-            if self.matrix[column][row - 1] == turn_player
-            && self.matrix[column][row - 2] == turn_player
-            && self.matrix[column][row - 3] == turn_player {
-                return true;
+            let mut vert_in_a_row = 1;
+            for i in 1..N_IN_A_ROW {
+                if self.matrix[column][row - i] == turn_player {
+                    vert_in_a_row += 1;
+                    if vert_in_a_row == N_IN_A_ROW { return true }
+                } else {
+                    break;
+                }
             }
         }
         
@@ -205,12 +210,6 @@ fn main() {
         stdout.flush().unwrap();
 
         for c in stdin.keys() {
-            // write!(stdout,
-            //     "{}{}",
-            //     termion::cursor::Goto(1, 1),
-            //     termion::clear::CurrentLine)
-            //         .unwrap();
-
             match c.unwrap() {
                 Key::Char(x) => {
                     if board.winner == Winner::NoWinner {
