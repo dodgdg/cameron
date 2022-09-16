@@ -75,52 +75,67 @@ fn default_board() -> Board {
     }
 }
 
+fn check_spot(board: &Board, column: isize, row: isize, turn_player: Counter) -> bool {
+    // Check a specific spot safely
+    if column < 0 || column as usize >= BOARD_WIDTH { return false };
+    if row < 0 || row as usize >= BOARD_HEIGHT { return false };
+    board.matrix[column as usize][row as usize] == turn_player
+}
+
+fn efficient_check(board: &Board, column: usize, row: usize, column_shift: isize, row_shift: isize, turn_player: Counter) -> bool {
+    // Carefully search for 4 in a row to minimise the checks required
+    // Note: assumes board[column][row] == turn_player already
+    // Trick is just to expand one way til we get to 4 or hit a non-player counter, then expand the other way until we get 4 total or don't
+
+    let mut in_a_row_count = 1;
+
+    for i in 1..=3 {
+        if check_spot(&board,
+                      column as isize + i * column_shift,
+                      row as isize + i * row_shift,
+                      turn_player) {
+            in_a_row_count += 1;
+        } else {
+            break;
+        }
+    }
+
+    if in_a_row_count == 4 { return true };
+
+    for i in 1..=(4 - in_a_row_count) {
+        if check_spot(&board, 
+                      column as isize - i * column_shift, 
+                      row as isize - i * row_shift, 
+                      turn_player) {
+            in_a_row_count += 1;
+            if in_a_row_count == 4 { return true };
+        }
+    }
+
+    false
+}
+
 impl Board {
-//     fn winning_move(&self, column: usize, row: usize) -> bool {
-//         let turn_player = Counter::PlayerCounter(self.turn);
-// //  SHIT you forgot that we could be completing the line from the middle also
-//         if row >= 3 {
-//             // vertical check (S)
-//             if self.matrix[column][row - 1] == turn_player
-//             && self.matrix[column][row - 2] == turn_player
-//             && self.matrix[column][row - 3] == turn_player {
-//                 return true;
-//             }
-//             // diagonal check SE
-//             if column <= BOARD_WIDTH - 4
-//             && self.matrix[column + 1][row - 1] == turn_player
-//             && self.matrix[column][row - 2] == turn_player
-//             && self.matrix[column][row - 3] == turn_player {
-//                 return true;
-//             }
-//             // diagonal check SW
-//             if column >= 3
-//             && self.matrix[column][row - 1] == turn_player
-//             && self.matrix[column][row - 2] == turn_player
-//             && self.matrix[column][row - 3] == turn_player {
-//                 return true;
-//             }
-
-//         if row <= BOARD_HEIGHT - 4 {
-//             // no vertical check (N)
-
-//             // diagonal check NE
-//             if column <= BOARD_WIDTH - 4
-//             && self.matrix[column + 1][row - 1] == turn_player
-//             && self.matrix[column][row - 2] == turn_player
-//             && self.matrix[column][row - 3] == turn_player {
-//                 return true;
-//             }
-//             // diagonal check NW
-//             if column >= 3
-//             && self.matrix[column][row - 1] == turn_player
-//             && self.matrix[column][row - 2] == turn_player
-//             && self.matrix[column][row - 3] == turn_player {
-//                 return true;
-//             }
-
-//         return false;
-//     }
+    fn winning_move(&self, column: usize, row: usize) -> bool {
+        let turn_player = Counter::PlayerCounter(self.turn);
+        if row >= 3 {
+            // vertical check (S)
+            if self.matrix[column][row - 1] == turn_player
+            && self.matrix[column][row - 2] == turn_player
+            && self.matrix[column][row - 3] == turn_player {
+                return true;
+            }
+        }
+        
+        // Horizontal check (W-E)
+        if efficient_check(&self, column, row, 1, 0, turn_player) { return true };
+        // Diagonal check (NW-SE)
+        if efficient_check(&self, column, row, 1, -1, turn_player) { return true };
+        // Diagonal check (SW-NE)
+        if efficient_check(&self, column, row, 1, 1, turn_player) { return true };
+        
+        false
+    }
 
     fn make_move(&mut self, player_move: PlayerMove) -> Result<&Board, MoveError> {
         if self.winner != Winner::NoWinner {
@@ -139,9 +154,9 @@ impl Board {
             return Err(MoveError::ColumnFull);
         }
         
-        // if self.winning_move(player_move.column, spot) {
-            // self.winner = Winner::WinningPlayer(player_move.player);
-        // }
+        if self.winning_move(player_move.column, spot) {
+            self.winner = Winner::WinningPlayer(player_move.player);
+        }
         self.matrix[player_move.column][spot] = Counter::PlayerCounter(player_move.player);
         self.top_spot[player_move.column] += 1;
         self.turn = self.turn.other();
@@ -171,10 +186,17 @@ fn main() {
     let mut board = default_board();
     
     loop {
+        let winner_msg = match board.winner {
+            Winner::WinningPlayer(Player::Player1) => format!("{}Player 1 Wins!{}", PLAYER_1_COLOR, DEFAULT_COLOR),
+            Winner::WinningPlayer(Player::Player2) => format!("{}Player 2 Wins!{}", PLAYER_2_COLOR, DEFAULT_COLOR),
+            Winner::NoWinner => String::from(""),
+        };
+
         let stdin = stdin();
         write!(stdout,
-            "{}\r\n{}{}{}",
+            "{}{}\r\n{}{}{}",
             termion::clear::All,
+            winner_msg,
             board.display(),
             termion::cursor::Goto(1, 1),
             termion::cursor::Hide
@@ -183,18 +205,21 @@ fn main() {
         stdout.flush().unwrap();
 
         for c in stdin.keys() {
-            write!(stdout,
-                "{}{}",
-                termion::cursor::Goto(1, 1),
-                termion::clear::CurrentLine)
-                    .unwrap();
+            // write!(stdout,
+            //     "{}{}",
+            //     termion::cursor::Goto(1, 1),
+            //     termion::clear::CurrentLine)
+            //         .unwrap();
 
             match c.unwrap() {
                 Key::Char(x) => {
-                    if let Some(d) = x.to_digit(10) {
-                        if d > 0 && d < (BOARD_WIDTH + 1) as u32 {
-                            board.make_move(PlayerMove { player: board.turn, column: (d - 1) as usize }).unwrap();
-                            break;
+                    if board.winner == Winner::NoWinner {
+                        if let Some(d) = x.to_digit(10) {
+                            if d > 0 && d < (BOARD_WIDTH + 1) as u32 {
+                                if let Ok(_) = board.make_move(PlayerMove { player: board.turn, column: (d - 1) as usize }) {
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
@@ -202,5 +227,6 @@ fn main() {
             }
             stdout.flush().unwrap();
         }
+        
     }
 }
