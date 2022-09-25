@@ -84,9 +84,9 @@ fn check_spot(board: &Board, column: isize, row: isize, turn_player: Counter) ->
 }
 
 fn efficient_check(board: &Board, column: usize, row: usize, column_shift: isize, row_shift: isize, turn_player: Counter) -> bool {
-    // Carefully search for 4 in a row to minimise the checks required
+    // Carefully search for N in a row to minimise the checks required
     // Note: assumes board[column][row] == turn_player already
-    // Trick is just to expand one way til we get to 4 or hit a non-player counter, then expand the other way until we get 4 total or don't
+    // Trick is just to expand one way til we get to N or hit a non-player counter, then expand the other way until we get to N or don't
 
     let mut in_a_row_count = 1;
 
