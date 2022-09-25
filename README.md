@@ -11,7 +11,7 @@ A faster connect 4 AI in Rust.
 
 ### TODO:
 - ~~Implement board and playing~~
-- Create move tree
+- ~~Create move tree~~
 - ~~Separate into different files / cleanup~~
 - Implement MCTS on the move tree
 - Add multithreading
