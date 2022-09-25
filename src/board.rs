@@ -24,7 +24,7 @@ pub enum Counter {
 }
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Winner {
     WinningPlayer(Player),
     NoWinner,

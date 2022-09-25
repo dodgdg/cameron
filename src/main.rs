@@ -17,6 +17,8 @@ mod board;
 use board::{Player, PlayerMove, Counter, Board, Winner, BOARD_WIDTH, BOARD_HEIGHT};
 mod movetree;
 use movetree::{MoveTree, default_move_tree};
+mod montecarlo;
+use montecarlo::random_game_simulation;
 
 impl Board {
     fn display(&self) -> String {
