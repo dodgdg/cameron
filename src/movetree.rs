@@ -31,6 +31,7 @@ pub struct Node {
     parent: Option<usize>,
     children: [Option<usize>; BOARD_WIDTH],
     data: GameState,
+    score: f32,
 }
 
 #[derive(Debug)]
@@ -46,6 +47,7 @@ pub fn default_move_tree() -> MoveTree {
             parent: None,
             children: [None; BOARD_WIDTH],
             data: default_game_state(),
+            score: 0.,
         }
     );
 
@@ -60,6 +62,10 @@ fn update_node(mut game_state: &mut GameState, win: bool) {
     if win {
         game_state.wins += 1;
     }
+}
+
+fn get_score(wins: usize, playouts: usize, parent_playouts: usize) -> f32 {
+    wins as f32 / playouts as f32 + (2.0 * (parent_playouts as f32).ln() / (playouts as f32)).sqrt()
 }
 
 impl MoveTree {
@@ -77,6 +83,7 @@ impl MoveTree {
     }
 
     pub fn add_playout(&mut self, node_index: usize, row: usize, win: bool) {
+        let wins = {if win {1} else {0}};
         // add the node
         let ix = self.nodes.insert(
             Node {
@@ -85,8 +92,9 @@ impl MoveTree {
                 data: GameState { 
                     turn: self.nodes[node_index].data.turn.other(),
                     playouts: 1,
-                    wins: {if win {1} else {0}},
+                    wins: wins,
                 },
+                score: get_score(wins, 1, self.nodes[node_index].data.wins),
             });
 
         self.nodes[node_index].children[row - 1] = Some(ix);
@@ -96,5 +104,7 @@ impl MoveTree {
     pub fn traverse(&self, node_index: usize, row: usize) -> Option<usize>{
         self.nodes[node_index].children[row - 1]
     }
+
+
 
 }

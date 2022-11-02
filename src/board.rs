@@ -27,6 +27,7 @@ pub enum Counter {
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Winner {
     WinningPlayer(Player),
+    Draw,
     NoWinner,
 }
 
@@ -44,11 +45,11 @@ pub enum MoveError {
     ColumnFull,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Board {
     pub turn: Player,
     pub winner: Winner,
-    pub top_spot: [u8; BOARD_WIDTH],
+    pub top_spot: [usize; BOARD_WIDTH],
     pub matrix: [[Counter; BOARD_HEIGHT]; BOARD_WIDTH],
 }
 
@@ -127,6 +128,14 @@ impl Board {
         false
     }
 
+    fn drawing_move(&self, row: usize) -> bool {
+        if row != BOARD_HEIGHT - 1 {
+            return false;
+        } else {
+            return self.top_spot.iter().sum::<usize>() >= BOARD_WIDTH * BOARD_HEIGHT - 1
+        }
+    }
+
     pub fn make_move(&mut self, player_move: PlayerMove) -> Result<&Board, MoveError> {
         if self.winner != Winner::NoWinner {
             return Err(MoveError::GameOver);
@@ -143,10 +152,13 @@ impl Board {
         if spot >= BOARD_HEIGHT {
             return Err(MoveError::ColumnFull);
         }
-        
+
         if self.winning_move(player_move.column, spot) {
             self.winner = Winner::WinningPlayer(player_move.player);
+        } else if self.drawing_move(spot) {
+            self.winner = Winner::Draw;
         }
+
         self.matrix[player_move.column][spot] = Counter::PlayerCounter(player_move.player);
         self.top_spot[player_move.column] += 1;
         self.turn = self.turn.other();

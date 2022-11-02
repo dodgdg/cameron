@@ -18,7 +18,7 @@ use board::{Player, PlayerMove, Counter, Board, Winner, BOARD_WIDTH, BOARD_HEIGH
 mod movetree;
 use movetree::{MoveTree, default_move_tree};
 mod montecarlo;
-use montecarlo::random_game_simulation;
+use montecarlo::random_playout;
 
 impl Board {
     fn display(&self) -> String {
@@ -38,63 +38,65 @@ impl Board {
 }
 
 fn main() {
-    // let mut stdout = stdout().into_raw_mode().unwrap();
+    let mut stdout = stdout().into_raw_mode().unwrap();
 
-    // let mut board = board::default_board();
+    let mut board = board::default_board();
     
-    // loop {
-    //     let winner_msg = match board.winner {
-    //         Winner::WinningPlayer(Player::Player1) => format!("{}Player 1 Wins!{}", PLAYER_1_COLOR, DEFAULT_COLOR),
-    //         Winner::WinningPlayer(Player::Player2) => format!("{}Player 2 Wins!{}", PLAYER_2_COLOR, DEFAULT_COLOR),
-    //         Winner::NoWinner => String::from(""),
-    //     };
+    loop {
+        let winner_msg = match board.winner {
+            Winner::WinningPlayer(Player::Player1) => format!("{}Player 1 Wins!{}", PLAYER_1_COLOR, DEFAULT_COLOR),
+            Winner::WinningPlayer(Player::Player2) => format!("{}Player 2 Wins!{}", PLAYER_2_COLOR, DEFAULT_COLOR),
+            Winner::Draw => String::from("Game Drawn!"),
+            Winner::NoWinner => String::from("n"),
+        };
 
-    //     let stdin = stdin();
-    //     write!(stdout,
-    //         "{}{}\r\n{}{}{}",
-    //         termion::clear::All,
-    //         winner_msg,
-    //         board.display(),
-    //         termion::cursor::Goto(1, 1),
-    //         termion::cursor::Hide
-    //     )
-    //     .unwrap();
-    //     stdout.flush().unwrap();
+        let stdin = stdin();
+        write!(stdout,
+            "{}{}\r\n{}{:?}{}{}",
+            termion::clear::All,
+            winner_msg,
+            board.display(),
+            board.top_spot,
+            termion::cursor::Goto(1, 1),
+            termion::cursor::Hide,
+        )
+        .unwrap();
+        stdout.flush().unwrap();
 
-    //     for c in stdin.keys() {
-    //         match c.unwrap() {
-    //             Key::Char(x) => {
-    //                 if board.winner == Winner::NoWinner {
-    //                     if let Some(d) = x.to_digit(10) {
-    //                         if d > 0 && d < (BOARD_WIDTH + 1) as u32 {
-    //                             if let Ok(_) = board.make_move(PlayerMove { player: board.turn, column: (d - 1) as usize }) {
-    //                                 break;
-    //                             }
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //             _ => {}
-    //         }
-    //         stdout.flush().unwrap();
-    //     }
+        for c in stdin.keys() {
+            match c.unwrap() {
+                Key::Char(x) => {
+                    if board.winner == Winner::NoWinner {
+                        if let Some(d) = x.to_digit(10) {
+                            if d > 0 && d < (BOARD_WIDTH + 1) as u32 {
+                                if let Ok(_) = board.make_move(PlayerMove { player: board.turn, column: (d - 1) as usize }) {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            }
+            stdout.flush().unwrap();
+        }
         
-    // }
+    }
 
-    let mut mt = default_move_tree();
+    // let mut mt = default_move_tree();
 
-    let root = mt.root;
+    // let root = mt.root;
 
-    println!("{:?}", mt);
+    // println!("{:?}", mt);
 
-    mt.add_playout(root, 3, false);
-    let ix = mt.traverse(root, 3).unwrap();
-    mt.add_playout(ix, 3, true);
-    let ix2 = mt.traverse(ix, 3).unwrap();
+    // mt.add_playout(root, 3, false);
+    // let ix = mt.traverse(root, 3).unwrap();
+    // mt.add_playout(ix, 3, true);
+    // let ix2 = mt.traverse(ix, 3).unwrap();
 
-    println!("{:?}", mt);
-    println!("{:?}", mt.nodes[root]);
-    println!("{:?}", mt.nodes[ix]);
-    println!("{:?}", mt.nodes[ix2]);
+    // println!("{:?}", mt);
+    // println!("{:?}", mt.nodes[root]);
+    // println!("{:?}", mt.nodes[ix]);
+    // println!("{:?}", mt.nodes[ix2]);
 
 }
