@@ -7,15 +7,22 @@ use crate::movetree::MoveTree;
 
 
 fn random_move(rng: &mut ThreadRng, board: &mut Board) {
-    let random_move = board.top_spot.iter().filter(| &&x | x < BOARD_HEIGHT).choose(rng).unwrap();
-    board.make_move(PlayerMove {player: board.turn.other(), 
-                                column: *random_move});
+    let random_move = (0..BOARD_WIDTH).filter(| &x | board.top_spot[x] < BOARD_HEIGHT).choose(rng).unwrap();
+    // println!("move {}\r", random_move);
+    
+    board.make_move(PlayerMove {player: board.turn, 
+                                column: random_move}).unwrap();  // HANDLE BETTER
 }
 
 fn random_game_simulation(board: &mut Board, rng: &mut ThreadRng) -> Winner {
     loop {
         random_move(rng, board);
-        if board.winner != Winner::NoWinner { return board.winner }
+        if board.winner != Winner::NoWinner { 
+
+            // println!("Winner: {:?}\r", board.winner);
+
+            // println!("{}\r", board.display());
+            return board.winner }
     }
 }
 
@@ -23,12 +30,11 @@ pub fn random_playout(board: &mut Board, playouts: usize, chosen_player: Player)
     let mut rng = rand::thread_rng();
     let mut wins = 0;
     
-    for _ in 1..playouts {
-        match random_game_simulation(&mut board.clone(), &mut rng) {
-            Winner::WinningPlayer(chosen_player) => wins += 1,
-            _ => ()
+    for _ in 1..=playouts {
+        if random_game_simulation(&mut board.clone(), &mut rng) == Winner::WinningPlayer(chosen_player) {
+            wins += 1;
         }
-    };
-    
+    }
+    // println!("{} wins from {} playouts\r", wins, playouts);
     wins
 }
