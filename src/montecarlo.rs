@@ -20,13 +20,9 @@ fn random_move(rng: &mut ThreadRng, board: &mut Board) {
 
 fn random_game_simulation(board: &mut Board, rng: &mut ThreadRng) -> Winner {
     loop {
-        random_move(rng, board);
         if board.winner != Winner::NoWinner { 
-
-            // println!("Winner: {:?}\r", board.winner);
-
-            // println!("{}\r", board.display());
             return board.winner }
+        random_move(rng, board);
     }
 }
 

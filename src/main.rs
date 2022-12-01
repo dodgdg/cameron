@@ -65,7 +65,7 @@ fn main() {
     
     let mut brain = default_move_tree();
     
-    think_for_seconds(&mut brain, &mut board, 10);
+    // think_for_seconds(&mut brain, &mut board, 10);
 
     let mut lastmove = 0;
 
@@ -100,7 +100,7 @@ fn main() {
         if board.winner == Winner::NoWinner {
             if board.turn == Player::Player2 {
 
-                think_for_seconds(&mut brain, &mut board, 7);
+                think_for_seconds(&mut brain, &mut board, 1);
 
                 // brain.think_out_loud(&mut board.clone());
 

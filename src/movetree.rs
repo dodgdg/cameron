@@ -63,7 +63,7 @@ fn get_score(wins: usize, playouts: usize, parent_playouts: usize) -> f32 {
 
 fn choose_max_index<T: std::cmp::PartialOrd>(vec: &Vec<T>) -> usize {
     vec.iter().enumerate().reduce(| max_so_far, other | 
-                                  if other.1 > max_so_far.1 {other} else {max_so_far}).unwrap().0
+                                  if other.1 > max_so_far.1 {other} else {max_so_far}).unwrap().0  // TODO this breaks very rarely
 }
 
 impl MoveTree {
@@ -131,17 +131,17 @@ impl MoveTree {
         println!("scores: {:?}\r", scores); 
         println!("Chance of Winning: {}\r", scores[ix]); 
         
-        if let Some(nix) = root_node.children[available_moves[ix]] {
-        let new_node = self.nodes[nix];
-        let scores2 = available_moves.iter().map(| &mov | {
-            if let Some(ix) = new_node.children[mov] {
-                self.nodes[ix].data.wins as f32 
-                / (0.0001 + self.nodes[ix].data.playouts as f32) // NEED TO IMPROVE (NO 0.01 + ...)
-            } else {
-                0.0
-            }}).collect::<Vec<_>>();
-            println!("sub-scores: {:?}\r", scores2); 
-        }
+        // if let Some(nix) = root_node.children[available_moves[ix]] {
+        // let new_node = self.nodes[nix];
+        // let scores2 = available_moves.iter().map(| &mov | {
+        //     if let Some(ix) = new_node.children[mov] {
+        //         self.nodes[ix].data.wins as f32 
+        //         / (0.0001 + self.nodes[ix].data.playouts as f32) // NEED TO IMPROVE (NO 0.01 + ...)
+        //     } else {
+        //         0.0
+        //     }}).collect::<Vec<_>>();
+        //     println!("sub-scores: {:?}\r", scores2); 
+        // }
 
         available_moves[ix]
     }
