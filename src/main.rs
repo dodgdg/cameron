@@ -20,6 +20,27 @@ mod movetree;
 use movetree::{MoveTree, default_move_tree};
 mod montecarlo;
 
+
+fn think_for_seconds(brain: &mut MoveTree, board: &mut Board, seconds: u64) {
+    let interval = Duration::from_secs(seconds);
+    let stop_time = Instant::now() + interval;
+
+    let mut counter = 0;
+
+    loop {
+        brain.think(&mut board.clone());
+        counter += 1;
+        // println!("{}\r", counter);
+        
+        if Instant::now() > stop_time {
+            // println!("{} done \r", counter);
+            // println!("{:?} done \r", brain.nodes);
+            break;
+        }
+    }
+}
+
+
 impl Board {
     fn display(&self) -> String {
         let mut board_string = String::from("");
@@ -44,14 +65,8 @@ fn main() {
     
     let mut brain = default_move_tree();
     
-    // let mut brain = default_move_tree();
+    think_for_seconds(&mut brain, &mut board, 10);
 
-    // brain.add_playout(brain.root, 3, true);
-    // let x = brain.best_move(&board);
-
-    // brain.think(&mut board.clone());
-
-    // print!("test");
     let mut lastmove = 0;
 
     loop {
@@ -66,7 +81,7 @@ fn main() {
 
         let stdin = stdin();
         // write!(stdout,
-        //     "{}{}\r\n{}{}{}",
+        //     "{}{}\r\n{}\r  1  2  3  4  5  6  7{}{}",
         //     termion::clear::All,
         //     winner_msg,
         //     board.display(),
@@ -85,28 +100,12 @@ fn main() {
         if board.winner == Winner::NoWinner {
             if board.turn == Player::Player2 {
 
-                let interval = Duration::from_secs(3);
-                let stop_time = Instant::now() + interval;
+                think_for_seconds(&mut brain, &mut board, 7);
 
-                let mut counter = 0;
+                // brain.think_out_loud(&mut board.clone());
 
-                loop {
-                    brain.think(&mut board.clone());
-                    counter += 1;
-                    // println!("{}\r", counter);
-                    
-                    if Instant::now() > stop_time {
-                        println!("{} done \r", counter);
-                        println!("{:?} done \r", brain.nodes);
-                        break;
-                    }
-                }
-
-
-                brain.think_out_loud(&mut board.clone());
-                
                 lastmove = brain.best_move(&board);
-                // println!("{:?}", brain);
+                
                 board.make_move(PlayerMove {player: board.turn, column: lastmove}).unwrap();
                 brain.traverse_root(lastmove);
             } else {
@@ -116,6 +115,7 @@ fn main() {
                             if let Some(d) = x.to_digit(10) {
                                 if d > 0 && d < (BOARD_WIDTH + 1) as u32 {
                                     if let Ok(_) = board.make_move(PlayerMove { player: board.turn, column: (d - 1) as usize }) {
+                                        println!("Your best move was {}\r", brain.best_move(&board)+1);
                                         brain.traverse_root((d - 1) as usize);
                                         break;
                                     }
@@ -127,7 +127,6 @@ fn main() {
                 }
             }
         } else {
-            brain.think_out_loud(&mut board.clone());
             break;
         }
     }
