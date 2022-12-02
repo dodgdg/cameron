@@ -1,5 +1,6 @@
 extern crate termion;
 
+use std::fmt::format;
 use std::mem::{size_of_val};
 use std::io::{Write, stdout, stdin};
 use std::time::{Duration, Instant};
@@ -25,16 +26,10 @@ fn think_for_seconds(brain: &mut MoveTree, board: &mut Board, seconds: u64) {
     let interval = Duration::from_secs(seconds);
     let stop_time = Instant::now() + interval;
 
-    let mut counter = 0;
-
     loop {
         brain.think(&mut board.clone());
-        counter += 1;
-        // println!("{}\r", counter);
         
         if Instant::now() > stop_time {
-            // println!("{} done \r", counter);
-            // println!("{:?} done \r", brain.nodes);
             break;
         }
     }
@@ -65,7 +60,7 @@ fn main() {
     
     let mut brain = default_move_tree();
     
-    // think_for_seconds(&mut brain, &mut board, 10);
+    // think_for_seconds(&mut brain, &mut board, 200);
 
     let mut lastmove = 0;
 
@@ -74,35 +69,25 @@ fn main() {
             Winner::WinningPlayer(Player::Player1) => format!("{}Player 1 Wins!{}", PLAYER_1_COLOR, DEFAULT_COLOR),
             Winner::WinningPlayer(Player::Player2) => format!("{}Player 2 Wins!{}", PLAYER_2_COLOR, DEFAULT_COLOR),
             Winner::Draw => String::from("Game Drawn!"),
-            Winner::NoWinner => String::from("Play Continues..."),
+            Winner::NoWinner => format!("{} turn", if board.turn == Player::Player1 {"Your"} else {"My"}),
         };
 
-        // println!("{}", winner_msg);
-
         let stdin = stdin();
-        // write!(stdout,
-        //     "{}{}\r\n{}\r  1  2  3  4  5  6  7{}{}",
-        //     termion::clear::All,
-        //     winner_msg,
-        //     board.display(),
-        //     termion::cursor::Goto(1, 1),
-        //     termion::cursor::Hide,
-        // )
-        // .unwrap();
-        // stdout.flush().unwrap();
-        
-        println!(
-            "{}\r\n{}\r  1  2  3  4  5  6  7",
+        write!(stdout,
+            "{}{}\r\n{}\r  1  2  3  4  5  6  7{}{}",
+            termion::clear::All,
             winner_msg,
             board.display(),
-        );
+            termion::cursor::Goto(1, 1),
+            termion::cursor::Hide,
+        )
+        .unwrap();
+        stdout.flush().unwrap();
 
         if board.winner == Winner::NoWinner {
             if board.turn == Player::Player2 {
 
-                think_for_seconds(&mut brain, &mut board, 1);
-
-                // brain.think_out_loud(&mut board.clone());
+                think_for_seconds(&mut brain, &mut board, 2);
 
                 lastmove = brain.best_move(&board);
                 
@@ -115,7 +100,6 @@ fn main() {
                             if let Some(d) = x.to_digit(10) {
                                 if d > 0 && d < (BOARD_WIDTH + 1) as u32 {
                                     if let Ok(_) = board.make_move(PlayerMove { player: board.turn, column: (d - 1) as usize }) {
-                                        println!("Your best move was {}\r", brain.best_move(&board)+1);
                                         brain.traverse_root((d - 1) as usize);
                                         break;
                                     }
@@ -130,20 +114,6 @@ fn main() {
             break;
         }
     }
-    // let mut mt = default_move_tree();
-
-    // let root = mt.root;
-
-    // println!("{:?}", mt);
-
-    // mt.add_playout(root, 3, false);
-    // let ix = mt.traverse(root, 3).unwrap();
-    // mt.add_playout(ix, 3, true);
-    // let ix2 = mt.traverse(ix, 3).unwrap();
-
-    // println!("{:?}", mt);
-    // println!("{:?}", mt.nodes[root]);
-    // println!("{:?}", mt.nodes[ix]);
-    // println!("{:?}", mt.nodes[ix2]);
+    println!(",");
 
 }

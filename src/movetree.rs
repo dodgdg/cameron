@@ -5,14 +5,6 @@ use crate::montecarlo::random_playout;
 
 const EXPLORE: f32 = 2.0;
 
-// I'm thinking that since we already edit the state of Board loads during the simulation phase,
-// there's no harm in just storing the moves we make, and updating a fresh board as we traverse the tree.
-// Let's see.
-
-// struct NodePool {
-//     nodes: Vec<Node>,
-// }
-
 #[derive(Debug, Clone, Copy)]
 pub struct GameState {
     pub turn: Player,
@@ -58,7 +50,7 @@ pub fn default_move_tree() -> MoveTree {
 }
 
 fn get_score(wins: usize, playouts: usize, parent_playouts: usize) -> f32 {
-    wins as f32 / (0.01 + playouts as f32) as f32 + (EXPLORE * ((parent_playouts) as f32).ln() / (0.0001 + playouts as f32)).sqrt()  // NEED TO IMPROVE (NO 0.01 + ...)
+    wins as f32 / (0.0001 + playouts as f32) as f32 + (EXPLORE * ((parent_playouts) as f32).ln() / (0.0001 + playouts as f32)).sqrt()  // NEED TO IMPROVE (NO 0.0001 + ...)
 }
 
 fn choose_max_index<T: std::cmp::PartialOrd>(vec: &Vec<T>) -> usize {
@@ -123,25 +115,11 @@ impl MoveTree {
         let scores = available_moves.iter().map(| &mov | {
                                                                 if let Some(ix) = root_node.children[mov] {
                                                                     self.nodes[ix].data.wins as f32 
-                                                                    / (0.0001 + self.nodes[ix].data.playouts as f32) // NEED TO IMPROVE (NO 0.01 + ...)
+                                                                    / (0.0001 + self.nodes[ix].data.playouts as f32) // NEED TO IMPROVE (NO 0.0001 + ...)
                                                                 } else {
                                                                     0.0
                                                                 }}).collect::<Vec<_>>();
         let ix = choose_max_index(&scores);
-        println!("scores: {:?}\r", scores); 
-        println!("Chance of Winning: {}\r", scores[ix]); 
-        
-        // if let Some(nix) = root_node.children[available_moves[ix]] {
-        // let new_node = self.nodes[nix];
-        // let scores2 = available_moves.iter().map(| &mov | {
-        //     if let Some(ix) = new_node.children[mov] {
-        //         self.nodes[ix].data.wins as f32 
-        //         / (0.0001 + self.nodes[ix].data.playouts as f32) // NEED TO IMPROVE (NO 0.01 + ...)
-        //     } else {
-        //         0.0
-        //     }}).collect::<Vec<_>>();
-        //     println!("sub-scores: {:?}\r", scores2); 
-        // }
 
         available_moves[ix]
     }
@@ -152,15 +130,9 @@ impl MoveTree {
         let mut current_ix = self.root;
         let mut available_moves;
 
-        // println!("root:{}\r", current_ix);
-
         loop {
             // make move
             available_moves = (0..BOARD_WIDTH).filter(| &x | current_board.top_spot[x] < BOARD_HEIGHT).collect::<Vec<_>>();
-
-            // println!("current index: {:?}\r", current_ix);
-            // println!("moves: {:?}\r", available_moves);
-            // println!("top: {:?}\r", current_board.top_spot);
 
             let scores = available_moves.iter().map(| &mov | {
                 if let Some(ix) = self.nodes[current_ix].children[mov] {
@@ -168,11 +140,8 @@ impl MoveTree {
                 } else {
                     get_score(0, 0, self.nodes[current_ix].data.playouts)
                 }}).collect::<Vec<_>>();
-             
-            // println!("scores: {:?}\r", scores);
 
             next_move = available_moves[choose_max_index(&scores)];
-            // println!("next move: {}\r", next_move);
 
             current_board.make_move(PlayerMove { player: current_board.turn, 
                 column: next_move }).unwrap();  // HANDLE BETTER
@@ -188,9 +157,6 @@ impl MoveTree {
                 break;
             }
         }
-            
-        // println!("stop\r");
-        // println!("{}\r", current_board.display());
 
         // add a new random playout
 
@@ -199,72 +165,5 @@ impl MoveTree {
 
         let wins = if (playout_wins as f32 / playouts as f32) > 0.5 {1} else {0};
         self.add_playout(current_ix, next_move, wins, 1, current_board.turn.other());
-
-
-        // println!("added playout");
     }
-
-//     // Main function
-//     pub fn think_out_loud(&mut self, current_board: &mut Board) {
-//         let mut next_move;
-//         let mut current_ix = self.root;
-//         let mut available_moves;
-        
-//         println!("root:{}\r", current_ix);
-
-//         loop {
-//             // make move
-//             available_moves = (0..BOARD_WIDTH).filter(| &x | current_board.top_spot[x] < BOARD_HEIGHT).collect::<Vec<_>>();
-
-//             println!("current index: {:?}\r", current_ix);
-//             println!("moves: {:?}\r", available_moves);
-//             println!("top: {:?}\r", current_board.top_spot);
-
-//             let scores = available_moves.iter().map(| &mov | {
-//                 if let Some(ix) = self.nodes[current_ix].children[mov] {
-//                     get_score(self.nodes[ix].data.wins, self.nodes[ix].data.playouts, self.nodes[current_ix].data.playouts)
-//                 } else {
-//                     get_score(0, 0, self.nodes[current_ix].data.playouts)
-//                 }}).collect::<Vec<_>>();
-            
-//             println!("parent_playouts: {}\r", self.nodes[current_ix].data.playouts); 
-//             println!("scores: {:?}\r", scores);
-//             self.best_move(current_board);
-
-//             next_move = available_moves[choose_max_index(&scores)];
-//             println!("next move: {}\r", next_move);
-
-//             current_board.make_move(PlayerMove { player: current_board.turn, 
-//                 column: next_move }).unwrap();  // HANDLE BETTER
-
-//             println!("{}\r", current_board.display());
-            
-//             match current_board.winner {  // TODO can optimise to avoid searching these nodes again? alpha-beta?
-//                 Winner::WinningPlayer(player) => {self.add_playout(current_ix, next_move, 1, 1, player); return;},
-//                 _ => ()
-//             }
-
-//             // TODO look at this again
-//             if let Some(ix) = self.nodes[current_ix].children[next_move] {
-//                 current_ix = ix;
-//             } else {
-//                 break;
-//             }
-//         }
-            
-//         println!("stop\r");
-//         println!("{}\r", current_board.display());
-
-//         // add a new random playout
-
-//         let playouts = 100;
-//         let playout_wins = random_playout(current_board, playouts, current_board.turn.other());  // TODO WE NEED TO NEGAMAX YOU IDIOT!
-
-//         println!("{} wins\r", playout_wins);
-//         let wins = if (playout_wins as f32 / playouts as f32) > 0.5 {1} else {0};
-//         self.add_playout(current_ix, next_move, wins, 1, current_board.turn.other());
-
-
-//         // println!("added playout");
-//     }
 }
