@@ -10,8 +10,8 @@ fn random_move(rng: &mut ThreadRng, board: &mut Board) {
     let random_move = (0..BOARD_WIDTH).filter(| &x | board.top_spot[x] < BOARD_HEIGHT).choose(rng);
     match random_move {
         Some(good_move) => {board.make_move(PlayerMove {player: board.turn, 
-                                         column: good_move}).unwrap()},  // HANDLE BETTER
-        None => {println!("{}\r\n{:?}\r", board.display(), board.winner)}
+                                         column: good_move}).unwrap();},  // HANDLE BETTER
+        None => {println!("{}\r\n{:?}\r", board.display(), board.winner);}
     }
 }
 
