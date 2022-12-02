@@ -114,6 +114,20 @@ fn main() {
             break;
         }
     }
-    println!(",");
+    let winner_msg = match board.winner {
+        Winner::WinningPlayer(Player::Player1) => format!("{}Player 1 Wins!{}", PLAYER_1_COLOR, DEFAULT_COLOR),
+        Winner::WinningPlayer(Player::Player2) => format!("{}Player 2 Wins!{}", PLAYER_2_COLOR, DEFAULT_COLOR),
+        Winner::Draw => String::from("Game Drawn!"),
+        Winner::NoWinner => format!("{} turn", if board.turn == Player::Player1 {"Your"} else {"My"}),
+    };
+
+    write!(stdout,
+        "{}{}\r\n{}\r  1  2  3  4  5  6  7",
+        termion::clear::All,
+        winner_msg,
+        board.display(),
+    )
+    .unwrap();
+    stdout.flush().unwrap();
 
 }
