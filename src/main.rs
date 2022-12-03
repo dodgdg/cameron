@@ -15,6 +15,8 @@ const PLAYER_1_COLOR: color::Fg<color::Red> = color::Fg(color::Red);
 const PLAYER_2_COLOR: color::Fg<color::Blue> = color::Fg(color::Blue);
 const DEFAULT_COLOR: color::Fg<color::White> = color::Fg(color::White);
 
+const COMPUTER_PLAYER: Player = Player::Player2;
+
 mod board;
 use board::{Player, PlayerMove, Counter, Board, Winner, BOARD_WIDTH, BOARD_HEIGHT};
 mod movetree;
@@ -22,8 +24,8 @@ use movetree::{MoveTree, default_move_tree};
 mod montecarlo;
 
 
-fn think_for_seconds(brain: &mut MoveTree, board: &mut Board, seconds: u64) {
-    let interval = Duration::from_secs(seconds);
+fn think_for_seconds(brain: &mut MoveTree, board: &mut Board, seconds: f32) {
+    let interval = Duration::from_millis((seconds * 1000.0) as u64);
     let stop_time = Instant::now() + interval;
 
     loop {
@@ -60,7 +62,7 @@ fn main() {
     
     let mut brain = default_move_tree();
     
-    // think_for_seconds(&mut brain, &mut board, 200);
+    // think_for_seconds(&mut brain, &mut board, 200.0);
 
     let mut lastmove = 0;
 
@@ -69,7 +71,7 @@ fn main() {
             Winner::WinningPlayer(Player::Player1) => format!("{}Player 1 Wins!{}", PLAYER_1_COLOR, DEFAULT_COLOR),
             Winner::WinningPlayer(Player::Player2) => format!("{}Player 2 Wins!{}", PLAYER_2_COLOR, DEFAULT_COLOR),
             Winner::Draw => String::from("Game Drawn!"),
-            Winner::NoWinner => format!("{} turn", if board.turn == Player::Player1 {"Your"} else {"My"}),
+            Winner::NoWinner => format!("{} turn", if board.turn == COMPUTER_PLAYER {"My"} else {"Your"}),
         };
 
         let stdin = stdin();
@@ -85,9 +87,9 @@ fn main() {
         stdout.flush().unwrap();
 
         if board.winner == Winner::NoWinner {
-            if board.turn == Player::Player2 {
+            if board.turn == COMPUTER_PLAYER {
 
-                think_for_seconds(&mut brain, &mut board, 2);
+                think_for_seconds(&mut brain, &mut board, 2.0);
 
                 lastmove = brain.best_move(&board);
                 
@@ -118,7 +120,7 @@ fn main() {
         Winner::WinningPlayer(Player::Player1) => format!("{}Player 1 Wins!{}", PLAYER_1_COLOR, DEFAULT_COLOR),
         Winner::WinningPlayer(Player::Player2) => format!("{}Player 2 Wins!{}", PLAYER_2_COLOR, DEFAULT_COLOR),
         Winner::Draw => String::from("Game Drawn!"),
-        Winner::NoWinner => format!("{} turn", if board.turn == Player::Player1 {"Your"} else {"My"}),
+        Winner::NoWinner => format!("{} turn", if board.turn == COMPUTER_PLAYER {"My"} else {"Your"}),
     };
 
     write!(stdout,
