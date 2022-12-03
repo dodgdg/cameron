@@ -1,5 +1,5 @@
 # cameron
-A faster connect 4 AI in Rust.
+A faster connect four AI in Rust.
 
 ### NOTES:
 1) Ideally the set of states is a digraph, to account for different move orders, AND I think the move-selection algorithm can work with this (Connect 4 digraph has no cycles because the number of counters always increases), BUT I will stick with a tree for now, because it's simpler, and also I'd like to compare the performance of both approaches anyway.
