@@ -148,6 +148,7 @@ impl MoveTree {
             
             match current_board.winner {  // TODO can optimise to avoid searching these nodes again? alpha-beta?
                 Winner::WinningPlayer(player) => {self.add_playout(current_ix, next_move, 1, 1, player); return;},
+                Winner::Draw => {self.add_playout(current_ix, next_move, 0, 1, current_board.turn.other()); return;},
                 _ => ()
             }
 
@@ -161,7 +162,7 @@ impl MoveTree {
         // add a new random playout
 
         let playouts = 100;
-        let playout_wins = random_playout(current_board, playouts, current_board.turn.other());  // TODO WE NEED TO NEGAMAX YOU IDIOT!
+        let playout_wins = random_playout(current_board, playouts, current_board.turn.other());
 
         let wins = if (playout_wins as f32 / playouts as f32) > 0.5 {1} else {0};
         self.add_playout(current_ix, next_move, wins, 1, current_board.turn.other());
